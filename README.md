@@ -6,10 +6,10 @@ A Flutter application designed to help users track their nutrition, set health g
 
 ##  Features
 
-- **User Authentication**: Sign up, login, and password recovery  
-- **Personalized Nutrition Tracking**: Customized calorie and macronutrient targets based on your profile  
-- **Weight Tracking**: Monitor your weight journey with visual graphs  
-- **Food Logging**: Multiple ways to log meals (barcode scanning, search, manual entry, and image recognition)  
+- **User Authentication**: Sign up, login, and password recovery  ✅
+- **Personalized Nutrition Tracking**: Customized calorie and macronutrient targets based on your profile   ✅
+- **Weight Tracking**: Monitor your weight journey with visual graphs  ✅
+- **Food Logging**: Multiple ways to log meals (barcode scanning, search, manual entry, and image recognition)  ✅
 - **Meal Planning**: Plan your meals in advance to meet your nutritional goals
 - **Barcode Scanner**: Get nutritional information by scanning barcode **(In Progess)**
 - **Database**: OpenFoodFacts/USDA database
@@ -48,6 +48,7 @@ flutter pub get
 google-services.json for Android
 
 GoogleService-Info.plist for iOS
+```
 
 4. Place them in the appropriate directories:
 Android: android/app/
@@ -57,7 +58,7 @@ iOS: ios/Runner/
 ### Run The App
 ```bash
 flutter run
-
+```
 
 ### Project Structure
 ```arduino
@@ -82,7 +83,7 @@ lib/
 │   ├── signup_screen.dart
 │   └── welcome_screen.dart
 └── main.dart
-
+```
 ---
 ### Tech Stack:
 Flutter – Cross-platform UI development
