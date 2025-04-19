@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PersonalDetailsScreen extends StatefulWidget {
   const PersonalDetailsScreen({super.key});
@@ -298,11 +299,33 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (_formKey.currentState!.validate() &&
                           _dateOfBirth != null) {
-                        // In a real app, you would save the user's personal details here
-                        // For now, proceed to the next screen
+                        // Save data to SharedPreferences temporarily
+                        final prefs = await SharedPreferences.getInstance();
+                        prefs.setString(
+                          'dateOfBirth',
+                          _dateOfBirth!.toIso8601String(),
+                        );
+                        prefs.setDouble(
+                          'currentWeight',
+                          double.parse(_weightController.text),
+                        );
+                        prefs.setDouble(
+                          'height',
+                          double.parse(_heightController.text),
+                        );
+                        prefs.setString('gender', _selectedGender!);
+                        prefs.setDouble(
+                          'targetWeight',
+                          double.parse(_targetWeightController.text),
+                        );
+                        prefs.setString(
+                          'activityLevel',
+                          _selectedActivityLevel!,
+                        );
+
                         Navigator.pushNamed(context, '/health-info');
                       } else if (_dateOfBirth == null) {
                         ScaffoldMessenger.of(context).showSnackBar(

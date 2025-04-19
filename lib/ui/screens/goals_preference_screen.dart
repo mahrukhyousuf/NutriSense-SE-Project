@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class GoalsPreferencesScreen extends StatefulWidget {
   const GoalsPreferencesScreen({super.key});
@@ -12,6 +15,7 @@ class _GoalsPreferencesScreenState extends State<GoalsPreferencesScreen> {
   String? _selectedGoal;
   String? _selectedDietaryPreference;
   String? _selectedTimeFrame;
+  bool _isSubmitting = false;
 
   final List<String> _goals = [
     'Lose Weight',
@@ -27,7 +31,7 @@ class _GoalsPreferencesScreenState extends State<GoalsPreferencesScreen> {
     'American',
     'Mexican',
     'Italian',
-    'Other',
+    'None',
   ];
 
   // Added time frame options for goal achievement
@@ -161,21 +165,192 @@ class _GoalsPreferencesScreenState extends State<GoalsPreferencesScreen> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        // In a real app, you would save the user's goals and preferences here
-                        // For now, proceed to the dashboard
-                        Navigator.pushReplacementNamed(context, '/dashboard');
-                      }
-                    },
+                    onPressed:
+                        _isSubmitting
+                            ? null
+                            : () async {
+                              if (_formKey.currentState!.validate()) {
+                                setState(() {
+                                  _isSubmitting = true;
+                                });
+
+                                try {
+                                  // 1. Get all stored data from SharedPreferences
+                                  final prefs =
+                                      await SharedPreferences.getInstance();
+
+                                  // Personal details
+                                  final dateOfBirthStr = prefs.getString(
+                                    'dateOfBirth',
+                                  );
+                                  final dateOfBirth = DateTime.parse(
+                                    dateOfBirthStr!,
+                                  );
+                                  final currentWeight =
+                                      prefs.getDouble('currentWeight')!;
+                                  final height = prefs.getDouble('height')!;
+                                  final gender = prefs.getString('gender')!;
+                                  final targetWeight =
+                                      prefs.getDouble('targetWeight')!;
+                                  final activityLevel =
+                                      prefs.getString('activityLevel')!;
+
+                                  // Health information
+                                  final allergies =
+                                      prefs.getStringList('allergies') ?? [];
+                                  final otherAllergies =
+                                      prefs.getString('otherAllergies') ?? '';
+                                  final dietaryRestrictions =
+                                      prefs.getStringList(
+                                        'dietaryRestrictions',
+                                      ) ??
+                                      [];
+                                  final otherDietaryRestrictions =
+                                      prefs.getString(
+                                        'otherDietaryRestrictions',
+                                      ) ??
+                                      '';
+                                  final medicalConditions =
+                                      prefs.getStringList(
+                                        'medicalConditions',
+                                      ) ??
+                                      [];
+                                  final otherMedicalConditions =
+                                      prefs.getString(
+                                        'otherMedicalConditions',
+                                      ) ??
+                                      '';
+
+                                  // Goals & preferences (current screen)
+                                  final primaryGoal = _selectedGoal!;
+                                  final timeFrame = _selectedTimeFrame!;
+                                  final dietaryPreference =
+                                      _selectedDietaryPreference!;
+
+                                  // 2. Get current user
+                                  final user =
+                                      FirebaseAuth.instance.currentUser;
+                                  if (user == null) {
+                                    throw Exception(
+                                      'No authenticated user found',
+                                    );
+                                  }
+
+                                  // First, get the name directly from the current user if available
+                                  String userName = '';
+                                  String userEmail = user.email ?? '';
+
+                                  // 3. Then check Firestore for existing name as a backup
+                                  final userDoc =
+                                      await FirebaseFirestore.instance
+                                          .collection('users')
+                                          .doc(user.uid)
+                                          .get();
+
+                                  if (userDoc.exists) {
+                                    final userData = userDoc.data();
+                                    if (userData != null &&
+                                        userData.containsKey('name') &&
+                                        userData['name'] != null &&
+                                        userData['name']
+                                            .toString()
+                                            .isNotEmpty) {
+                                      userName = userData['name'];
+                                      print(
+                                        'Retrieved existing name from Firestore: $userName',
+                                      );
+                                    }
+                                  }
+
+                                  if (userName.isEmpty) {
+                                    userName = user.displayName ?? 'User';
+                                    print(
+                                      'Using fallback name from Auth: $userName',
+                                    );
+                                  }
+
+                                  // 4. Save all data to Firestore
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(user.uid)
+                                      .set({
+                                        // Important user information
+                                        'name': userName,
+                                        'email': userEmail,
+
+                                        // Personal details
+                                        'dateOfBirth': Timestamp.fromDate(
+                                          dateOfBirth,
+                                        ),
+                                        'currentWeight': currentWeight,
+                                        'height': height,
+                                        'gender': gender,
+                                        'targetWeight': targetWeight,
+                                        'activityLevel': activityLevel,
+
+                                        // Health information
+                                        'allergies': allergies,
+                                        'otherAllergies': otherAllergies,
+                                        'dietaryRestrictions':
+                                            dietaryRestrictions,
+                                        'otherDietaryRestrictions':
+                                            otherDietaryRestrictions,
+                                        'medicalConditions': medicalConditions,
+                                        'otherMedicalConditions':
+                                            otherMedicalConditions,
+
+                                        // Goals & preferences
+                                        'primaryGoal': primaryGoal,
+                                        'timeFrame': timeFrame,
+                                        'dietaryPreference': dietaryPreference,
+
+                                        // Additional metadata
+                                        'profileCompleted': true,
+                                        'profileCompletedAt':
+                                            FieldValue.serverTimestamp(),
+                                      }, SetOptions(merge: true));
+
+                                  // 5. Navigate to dashboard
+                                  if (mounted) {
+                                    Navigator.pushReplacementNamed(
+                                      context,
+                                      '/dashboard',
+                                    );
+                                  }
+                                } catch (e) {
+                                  print('Error saving user data: $e');
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Error saving your data: ${e.toString()}',
+                                        ),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                } finally {
+                                  if (mounted) {
+                                    setState(() {
+                                      _isSubmitting = false;
+                                    });
+                                  }
+                                }
+                              }
+                            },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
                     ),
-                    child: const Text(
-                      'Let\'s Get Started',
-                      style: TextStyle(fontSize: 16),
-                    ),
+                    child:
+                        _isSubmitting
+                            ? const CircularProgressIndicator(
+                              color: Colors.white,
+                            )
+                            : const Text(
+                              'Let\'s Get Started',
+                              style: TextStyle(fontSize: 16),
+                            ),
                   ),
                 ),
               ],

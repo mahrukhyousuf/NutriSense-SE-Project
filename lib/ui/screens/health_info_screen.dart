@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HealthInfoScreen extends StatefulWidget {
   const HealthInfoScreen({super.key});
@@ -433,10 +434,76 @@ class _HealthInfoScreenState extends State<HealthInfoScreen> {
                   child: ElevatedButton(
                     onPressed:
                         _isFormValid
-                            ? () {
+                            ? () async {
                               if (_formKey.currentState!.validate()) {
-                                // In a real app, you would save the user's health information here
-                                // For now, proceed to the next screen
+                                // Collect allergies
+                                List<String> allergies = [];
+                                if (_hasNoAllergies) {
+                                  allergies.add('None');
+                                } else {
+                                  if (_hasPeanutAllergy)
+                                    allergies.add('Peanuts');
+                                  if (_hasGlutenAllergy)
+                                    allergies.add('Gluten');
+                                  if (_hasDairyAllergy) allergies.add('Dairy');
+                                }
+
+                                // Collect dietary restrictions
+                                List<String> dietaryRestrictions = [];
+                                if (_hasNoDietaryRestrictions) {
+                                  dietaryRestrictions.add('None');
+                                } else {
+                                  if (_isVegetarian)
+                                    dietaryRestrictions.add('Vegetarian');
+                                  if (_isVegan)
+                                    dietaryRestrictions.add('Vegan');
+                                  if (_isHalal)
+                                    dietaryRestrictions.add('Halal');
+                                  if (_isKeto) dietaryRestrictions.add('Keto');
+                                }
+
+                                // Collect medical conditions
+                                List<String> medicalConditions = [];
+                                if (_hasNoMedicalConditions) {
+                                  medicalConditions.add('None');
+                                } else {
+                                  if (_hasDiabetes)
+                                    medicalConditions.add('Diabetes');
+                                  if (_hasPCOS) medicalConditions.add('PCOS');
+                                  if (_hasLactoseIntolerance)
+                                    medicalConditions.add(
+                                      'Lactose Intolerance',
+                                    );
+                                  if (_hasHighCholesterol)
+                                    medicalConditions.add('High Cholesterol');
+                                  if (_hasIBS) medicalConditions.add('IBS');
+                                }
+
+                                // Save data to SharedPreferences temporarily
+                                final prefs =
+                                    await SharedPreferences.getInstance();
+                                prefs.setStringList('allergies', allergies);
+                                prefs.setString(
+                                  'otherAllergies',
+                                  _otherAllergyController.text,
+                                );
+                                prefs.setStringList(
+                                  'dietaryRestrictions',
+                                  dietaryRestrictions,
+                                );
+                                prefs.setString(
+                                  'otherDietaryRestrictions',
+                                  _otherDietaryRestrictionController.text,
+                                );
+                                prefs.setStringList(
+                                  'medicalConditions',
+                                  medicalConditions,
+                                );
+                                prefs.setString(
+                                  'otherMedicalConditions',
+                                  _otherMedicalConditionController.text,
+                                );
+
                                 Navigator.pushNamed(
                                   context,
                                   '/goals-preferences',

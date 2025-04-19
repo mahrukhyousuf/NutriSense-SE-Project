@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -80,27 +81,42 @@ class _SignupScreenState extends State<SignupScreen> {
               password: _passwordController.text,
             );
 
-        // Update display name - wrap this in a try-catch to handle the PigeonUserDetails error
+        // Update display name
         try {
           await userCredential.user?.updateDisplayName(
             _nameController.text.trim(),
           );
+
+          await userCredential.user?.reload();
+          print('Display name updated to: ${userCredential.user?.displayName}');
         } catch (e) {
           print('Display name update error (ignoring): $e');
-          // Continue despite this error as it's just the display name
         }
 
         // Create user document in Firestore
         if (userCredential.user != null) {
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(userCredential.user?.uid)
-              .set({
-                'name': _nameController.text.trim(),
-                'email': _emailController.text.trim(),
-                'createdAt': FieldValue.serverTimestamp(),
-                'hasProfileImage': _profileImage != null,
-              });
+          final String uid = userCredential.user!.uid;
+          final String userName = _nameController.text.trim();
+
+          print('Saving user name: $userName'); // Debug logging
+
+          await FirebaseFirestore.instance.collection('users').doc(uid).set({
+            'name': userName,
+            'email': _emailController.text.trim(),
+            'createdAt': FieldValue.serverTimestamp(),
+            'hasProfileImage': _profileImage != null,
+          });
+
+          // Upload profile image if selected
+          if (_profileImage != null) {
+            final imageUrl = await _uploadProfileImage(uid);
+            if (imageUrl != null) {
+              await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(uid)
+                  .update({'profileImageUrl': imageUrl});
+            }
+          }
         }
 
         // Navigate to personal details screen on success
