@@ -1,6 +1,6 @@
 # NutriSense
 
-A Flutter application designed to help users track their nutrition, set health goals, and make better dietary choices. (Code files in master branch)
+A Flutter **Mobile Application** designed to help users track their nutrition, set health goals, and make better dietary choices. **(Code files in master branch)**
 
 ---
 
