@@ -1,0 +1,70 @@
+name: nutrisense
+description: "A nutrition tracking mobile application."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  intl: ^0.18.1
+  
+  lottie: ^2.0.0
+  # State management
+  provider: ^6.0.5
+  
+  # Database
+  sqflite: ^2.3.0
+  path_provider: ^2.1.1
+  
+  # Firebase
+  firebase_core: ^2.24.0
+  firebase_auth: ^4.15.0
+  cloud_firestore: ^4.13.3
+  
+  # API and networking
+  http: ^1.1.0
+  
+  # Image and camera
+  camera: ^0.10.5+5
+  image_picker: ^1.0.4
+  
+  # Barcode scanning - commented out due to compatibility issues
+  # flutter_barcode_scanner: ^2.0.0
+  
+  # ML for image recognition
+  tflite_flutter: ^0.10.3
+  
+  # Storage
+  shared_preferences: ^2.2.2
+  flutter_secure_storage: ^9.0.0
+  firebase_storage: ^11.5.0
+
+  fl_chart: ^0.66.0
+  
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/logo.png
+    - assets/avocado.json
+    # - assets/images/
+    # - assets/icons/
+    # - assets/ml/
+
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins/Poppins-Regular.ttf
+        - asset: assets/fonts/Poppins/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins/Poppins-Bold.ttf
+          weight: 700
