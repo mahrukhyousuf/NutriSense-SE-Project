@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'food_logging_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -249,21 +250,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
       try {
         final now = DateTime.now();
 
-        // Add to Firestore
-        await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .collection('weight_entries')
-            .add({'date': Timestamp.fromDate(now), 'weight': weight});
-
-        // Update local data immediately
+        // Update local data immediately (even before Firestore saves)
         setState(() {
           _weightData.add(
             FlSpot(now.millisecondsSinceEpoch.toDouble(), weight),
           );
         });
 
-        print('Added new weight entry: $weight kg');
+        // Try to add to Firestore
+        try {
+          await _firestore
+              .collection('users')
+              .doc(user.uid)
+              .collection('weight_entries')
+              .add({'date': Timestamp.fromDate(now), 'weight': weight});
+          print('Added new weight entry to Firestore: $weight kg');
+        } catch (e) {
+          // Even if Firestore fails, we still keep the local entry
+          print('Failed to save weight entry to Firestore: $e');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Weight added locally but not saved to cloud due to permission issue.',
+              ),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
 
         // Refresh UI to show updated graph
         setState(() {});
@@ -488,7 +501,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               Expanded(
                                 child: ElevatedButton.icon(
                                   onPressed: () {
-                                    // Navigate to food log
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) =>
+                                                const FoodLoggingScreen(),
+                                      ),
+                                    );
                                   },
                                   icon: const Icon(Icons.restaurant_menu),
                                   label: const Text('Log Food'),
